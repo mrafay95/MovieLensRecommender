@@ -162,12 +162,9 @@ error
 
 
 ```{r}
-<<<<<<< HEAD
 
 scheme <- evaluationScheme(Rmat, method="split", train = .9, k=10, given=-5, goodRating=3)
-=======
-scheme <- evaluationScheme(Rmat, method="split", train = .9, k=10, given=-5, goodRating=5)
->>>>>>> 491774affd9ce3946c1e39bf2098a2411b8c22fe
+
 
 #algorithms <- list(
 #"random items" = list(name="RANDOM", param=NULL),
