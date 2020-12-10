@@ -162,7 +162,6 @@ error
 
 
 ```{r}
-
 scheme <- evaluationScheme(Rmat, method="split", train = .9, k=10, given=-5, goodRating=5)
 
 #algorithms <- list(
