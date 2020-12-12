@@ -56,30 +56,36 @@ rec_UBCF = Recommender(Rmat, method = 'UBCF',
 
 #Initialize User Input
 
-
 user_input = data.frame(
+  UserID = rep(6041,14),
   MovieID = c(9,3,2,12,15,5,6,1,13,4,8,11,10,7),
   Rating = c(4,3,2,5,5,3,5,1,5,2,3,5,5,2)
 )
+data <- train
+rownames(data) = NULL
+data <- rbind(data,user_input)
+i = paste0('u', data$UserID)
+j = paste0('m', data$MovieID)
+x = data$Rating
+tmp = data.frame(i, j, x, stringsAsFactors = T)
+Rmat_user = sparseMatrix(as.integer(tmp$i), as.integer(tmp$j), x = tmp$x)
+rownames(Rmat_user) = levels(tmp$i)
+colnames(Rmat_user) = levels(tmp$j)
+Rmat_user = new('realRatingMatrix', data = Rmat_user)
 
-
-user_input_Mat = Rmat[1]
-user_input_Mat[1,] = NA   #Not sure whether NA is updated in this matrix
-
-
-for (i in 1:dim(user_input)[1]) {
-  user_input_Mat[1,paste(c('m', user_input[i,1]), collapse = "")]  = user_input[i,2]
-
-}
+a <- Rmat_user["u6041",]
 
 # predicting....
-recom = predict(rec_UBCF, user_input_Mat, type = 'ratings')
+recom = predict(rec_UBCF, a, type = 'ratings')
 
 
 
 # Sorting the result by top ratings, picking top n results
 result = as(recom, 'matrix')[,]
+result <- result[!is.na(result)]
+result <- sort(result,decreasing = T)[1:10]
 #as(Rmat, 'matrix')[100:105, 1:10]
+
 
 
 
