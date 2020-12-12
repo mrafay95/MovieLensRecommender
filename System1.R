@@ -27,6 +27,11 @@ movies$image_url = sapply(movies$MovieID,
 
 
 
+
+
+
+
+
 set.seed(100)
 train.id = sample(nrow(ratings), floor(nrow(ratings)) * 0.8)
 train = ratings[train.id, ]
@@ -52,36 +57,11 @@ rec_UBCF = Recommender(Rmat, method = 'UBCF',
                                         nn = 25))
 
 
-### Predict recommendation from user input ###
-
-#Initialize User Input
+recom = predict(rec_UBCF, Rmat[100:105], type = 'ratings')
 
 
-user_input = data.frame(
-  MovieID = c(9,3,2,12,15,5,6,1,13,4,8,11,10,7),
-  Rating = c(4,3,2,5,5,3,5,1,5,2,3,5,5,2)
-)
-
-
-user_input_Mat = Rmat[1]
-user_input_Mat[1,] = NA   #Not sure whether NA is updated in this matrix
-
-
-for (i in 1:dim(user_input)[1]) {
-  user_input_Mat[1,paste(c('m', user_input[i,1]), collapse = "")]  = user_input[i,2]
-
-}
-
-# predicting....
-recom = predict(rec_UBCF, user_input_Mat, type = 'ratings')
-
-
-
-# Sorting the result by top ratings, picking top n results
-result = as(recom, 'matrix')[,]
-#as(Rmat, 'matrix')[100:105, 1:10]
-
-
+as(recom, 'matrix')[, 1:10]
+as(Rmat, 'matrix')[100:105, 1:10]
 
 
 
