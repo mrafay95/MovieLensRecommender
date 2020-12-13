@@ -75,8 +75,12 @@ Rmat = new('realRatingMatrix', data = Rmat)
 
 
 
+# Scheme 1:  Ranking based on highly-rated in genre
+
+# Average rating were calculated for each movie, movies with highest rating were ranked decreasingly for each genre
 
 movieAvgRat  = colMeans(as(Rmat, 'matrix'), na.rm = TRUE) 
+
 
 
 genre_highly_rated_matrix = matrix(NA, 18, length(unique(ratings$MovieID)))
@@ -111,11 +115,46 @@ for(i in 1:18) {
 
 }
 
+# Scheme 2:  Ranking based on popularity in genre
+
+# For each movie the counts of ratings >=3 were made, movies with highest counts were considered the most poopular in thier  genre 
+
+temp = as(Rmat, 'matrix')
+temp[which(temp < 3)] = NA
+temp[which(temp >= 3)] = 1
+
+moviePopCount = colSums(temp, na.rm = TRUE)  
 
 
 
+genre_most_popular_matrix = matrix(NA, 18, length(unique(ratings$MovieID)))
+rownames(genre_most_popular_matrix) = genre_list
 
 
-
+for(i in 1:18) {
+  
+  tmp = data.frame(id = movies$MovieID[genre_matrix[,i] == 1], rat = 1:length(movies$MovieID[genre_matrix[,i] == 1]))
+  tmp[,2] =NA
+  
+  tmp2 = moviePopCount[Rmat_Cols %in% movies$MovieID[genre_matrix[,i] == 1]] 
+  
+  for(j in tmp$id){
+    if(!is.na(j)){
+      
+      tmp[which(tmp$id == j),2] = tmp2[paste0('m',j)]
+      
+    }
+  }
+  
+  tmp = tmp[order(tmp$rat,decreasing = TRUE),]
+  print(i)
+  for(k in 1:dim(tmp)[1]){
+    if(!is.na(tmp[k,2])){
+      genre_most_popular_matrix[i,k] = tmp[k,1]
+    }
+    
+  }
+  
+}
 
 
