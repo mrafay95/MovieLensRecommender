@@ -19,8 +19,6 @@ ratings$Timestamp = NULL
 
 
 
-
-
 myurl = "https://liangfgithub.github.io/MovieData/"
 movies = readLines(paste0(myurl, 'movies.dat?raw=true'))
 movies = strsplit(movies, split = "::", fixed = TRUE, useBytes = TRUE)
@@ -60,7 +58,7 @@ remove("tmp", "genres")
 
 
 
-genre_matrix = genre_matrix[unique(train$MovieID),]
+#genre_matrix = genre_matrix[unique(ratings$MovieID),]
 
 
 
