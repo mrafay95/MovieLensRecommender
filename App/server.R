@@ -40,15 +40,11 @@ ratings$Timestamp = NULL
 
 
 
-#Recommendation algorithm 
+#Recommendation algorithm system 2
 
 set.seed(100)
 train.id = sample(nrow(ratings), floor(nrow(ratings)) * 0.8)
 train = ratings[train.id, ]
-head(train)
-
-test = ratings[-train.id, ]
-head(test)
 
 
 i = paste0('u', train$UserID)
@@ -66,12 +62,155 @@ rec_UBCF = Recommender(Rmat, method = 'UBCF',
                                         method = 'Cosine', 
                                         nn = 25))
 
+rm(Rmat)
+
+# System 1
+
+genres = as.data.frame(movies$Genres, stringsAsFactors=FALSE)
+tmp_sys1 = as.data.frame(tstrsplit(genres[,1], '[|]', type.convert=TRUE), stringsAsFactors=FALSE)
+
+
+genre_list = c("Action", "Adventure", "Animation",
+               "Children's", "Comedy", "Crime",
+               "Documentary", "Drama", "Fantasy",
+               "Film-Noir", "Horror", "Musical",
+               "Mystery", "Romance", "Sci-Fi",
+               "Thriller", "War", "Western")
+
+
+m = length(genre_list)
+genre_matrix = matrix(0, nrow(movies), length(genre_list))
+for(i in 1:nrow(tmp_sys1)){
+  genre_matrix[i,genre_list %in% tmp_sys1[i,]]=1
+}
+colnames(genre_matrix) = genre_list
+rownames(genre_matrix) = movies$MovieID
+
+remove("tmp_sys1", "genres")
 
 
 
+i = paste0('u', ratings$UserID)
+j = paste0('m', ratings$MovieID)
+x = ratings$Rating
+tmp_sys1 = data.frame(i, j, x, stringsAsFactors = T)
+Rmat_sys1 = sparseMatrix(as.integer(tmp_sys1$i), as.integer(tmp_sys1$j), x = tmp_sys1$x)
+rownames(Rmat_sys1) = levels(tmp_sys1$i)
+colnames(Rmat_sys1) = levels(tmp_sys1$j)
+Rmat_sys1 = new('realRatingMatrix', data = Rmat_sys1)
 
 
 
+# Scheme 1:  Ranking based on highly-rated in genre
+
+# Average rating were calculated for each movie, movies with highest rating were ranked decreasingly for each genre
+
+movieAvgRat  = colMeans(as(Rmat_sys1, 'matrix'), na.rm = TRUE)
+
+
+
+genre_highly_rated_matrix = matrix(NA, 18, length(unique(ratings$MovieID)))
+rownames(genre_highly_rated_matrix) = genre_list
+
+
+Rmat_sys1_Cols  = strtoi(strip(colnames(Rmat_sys1), char="m"))
+
+for(i in 1:18) {
+
+  tmp_sys1 = data.frame(id = movies$MovieID[genre_matrix[,i] == 1], rat = 1:length(movies$MovieID[genre_matrix[,i] == 1]))
+  tmp_sys1[,2] =NA
+
+  tmp2_sys1 = movieAvgRat[Rmat_sys1_Cols %in% movies$MovieID[genre_matrix[,i] == 1]]
+
+  for(j in tmp_sys1$id){
+    if(!is.na(j)){
+
+      tmp_sys1[which(tmp_sys1$id == j),2] = tmp2_sys1[paste0('m',j)]
+
+    }
+  }
+
+  tmp_sys1 = tmp_sys1[order(tmp_sys1$rat,decreasing = TRUE),]
+  print(i)
+  for(k in 1:dim(tmp_sys1)[1]){
+    if(!is.na(tmp_sys1[k,2])){
+      genre_highly_rated_matrix[i,k] = tmp_sys1[k,1]
+    }
+
+  }
+
+}
+rm(Rmat_sys1,train.id)
+
+
+# Scheme 2:  Ranking based on popularity in genre
+
+# For each movie the counts of ratings >=3 were made, movies with highest counts were considered the most poopular in thier  genre
+
+temp = as(Rmat_sys1, 'matrix')
+temp[which(temp < 3)] = NA
+temp[which(temp >= 3)] = 1
+
+moviePopCount = colSums(temp, na.rm = TRUE)
+
+
+
+genre_most_popular_matrix = matrix(NA, 18, length(unique(ratings$MovieID)))
+rownames(genre_most_popular_matrix) = genre_list
+
+
+for(i in 1:18) {
+
+  tmp_sys1 = data.frame(id = movies$MovieID[genre_matrix[,i] == 1], rat = 1:length(movies$MovieID[genre_matrix[,i] == 1]))
+  tmp_sys1[,2] =NA
+
+  tmp2_sys1 = moviePopCount[Rmat_sys1_Cols %in% movies$MovieID[genre_matrix[,i] == 1]]
+
+  for(j in tmp_sys1$id){
+    if(!is.na(j)){
+
+      tmp_sys1[which(tmp_sys1$id == j),2] = tmp2_sys1[paste0('m',j)]
+
+    }
+  }
+
+  tmp_sys1 = tmp_sys1[order(tmp_sys1$rat,decreasing = TRUE),]
+  print(i)
+  for(k in 1:dim(tmp_sys1)[1]){
+    if(!is.na(tmp_sys1[k,2])){
+      genre_most_popular_matrix[i,k] = tmp_sys1[k,1]
+    }
+
+  }
+
+}
+
+# Convert to dataframe
+genre_highly_rated_matrix <- as.data.frame(genre_highly_rated_matrix)
+genre_most_popular_matrix <- as.data.frame(genre_most_popular_matrix)
+
+genre_most_popular_matrix <- genre_most_popular_matrix[1:10]
+genre_highly_rated_matrix <- genre_highly_rated_matrix[1:10]
+
+genre_highly_rated_matrix <- t(genre_highly_rated_matrix)
+genre_most_popular_matrix <- t(genre_most_popular_matrix)
+
+genre_highly_rated_matrix <- as.data.frame(genre_highly_rated_matrix)
+genre_most_popular_matrix <- as.data.frame(genre_most_popular_matrix)
+
+# genre_list = c("Action", "Adventure", "Animation",
+#                "Children's", "Comedy", "Crime",
+#                "Documentary", "Drama", "Fantasy",
+#                "Film-Noir", "Horror", "Musical",
+#                "Mystery", "Romance", "Sci-Fi",
+#                "Thriller", "War", "Western")
+# 
+# genre_highly_rated_matrix <- read.csv("HR.csv",row.names =  1 )
+# colnames(genre_highly_rated_matrix) <- genre_list
+# genre_most_popular_matrix <- read.csv("PP.csv",row.names =  1 )
+# colnames(genre_most_popular_matrix) <- genre_list
+
+# Server function
 server_f <- shinyServer(function(input, output, session) {
   
   # show the books to be rated
@@ -177,5 +316,56 @@ server_f <- shinyServer(function(input, output, session) {
     
     
   }) # renderUI function
+  
+  
+  
+  
+  # System 1 Output for top 10 most popular movies
+
+  output$result_sys1_popular <- renderUI({
+    num_rows <- 2
+    num_movies <- 5
+    recom_result <- genre_most_popular_matrix
+
+
+    lapply(1:num_rows, function(i) {
+      list(fluidRow(lapply(1:num_movies, function(j) {
+        box(width = 2, status = "success", solidHeader = TRUE, title = paste0("Rank ", (i - 1) * num_movies + j),
+
+            div(style = "text-align:center", img(src = movies$image_url[genre_most_popular_matrix[(i - 1) * num_movies + j,input$genre]], height = 150)),
+            div(style="text-align:center; font-size: 100%", strong(movies$Title[genre_most_popular_matrix[(i - 1) * num_movies + j,input$genre]])
+            )
+
+        )
+      }))) # columns
+    }) # rows
+
+
+  }) # renderUI function
+
+  
+  # System 1 Output for top 10 highly rated movies 
+  
+  output$result_sys1_highlyrated <- renderUI({
+    num_rows <- 2
+    num_movies <- 5
+    recom_result <- genre_highly_rated_matrix
+    
+    
+    lapply(1:num_rows, function(i) {
+      list(fluidRow(lapply(1:num_movies, function(j) {
+        box(width = 2, status = "success", solidHeader = TRUE, title = paste0("Rank ", (i - 1) * num_movies + j),
+            
+            div(style = "text-align:center", img(src = movies$image_url[genre_highly_rated_matrix[(i - 1) * num_movies + j,input$genre_2]], height = 150)),
+            div(style="text-align:center; font-size: 100%", strong(movies$Title[genre_highly_rated_matrix[(i - 1) * num_movies + j,input$genre_2]])
+            )
+            
+        )       
+      }))) # columns
+    }) # rows
+    
+    
+  }) # renderUI function
+  
   
 }) # server function
