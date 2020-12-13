@@ -27,6 +27,7 @@ small_image_url = "https://liangfgithub.github.io/MovieImages/"
 movies$image_url = sapply(movies$MovieID, 
                           function(x) paste0(small_image_url, x, '.jpg?raw=true'))
 
+movies$MovieID <- 1:nrow(movies)
 
 myurl = "https://liangfgithub.github.io/MovieData/"
 
@@ -138,9 +139,12 @@ server_f <- shinyServer(function(input, output, session) {
       print(user_results)
       user_predicted_ids = str_sub(names(result),2)
       print(user_predicted_ids)
+      
+      
+      
       recom_results <- data.table(Rank = 1:10, 
-                                  MovieID = movies$MovieID[user_predicted_ids], 
-                                  Title = movies$Title[user_predicted_ids], 
+                                  MovieID = user_predicted_ids, 
+                                  Title = movies[match(user_predicted_ids, movies$MovieID), 2], 
                                   Predicted_rating =  user_results)
       
       print(recom_results)
@@ -155,21 +159,22 @@ server_f <- shinyServer(function(input, output, session) {
     num_rows <- 2
     num_movies <- 5
     recom_result <- df()
+    recom_result <- as.data.frame(recom_result)
+    recom_result$MovieID <- as.numeric(recom_result$MovieID)
+
     
     lapply(1:num_rows, function(i) {
       list(fluidRow(lapply(1:num_movies, function(j) {
         box(width = 2, status = "success", solidHeader = TRUE, title = paste0("Rank ", (i - 1) * num_movies + j),
             
-            div(style = "text-align:center", 
-                a(img(src = movies$image_url[recom_result$MovieID[(i - 1) * num_movies + j]], height = 150))
-            ),
-            div(style="text-align:center; font-size: 100%", 
-                strong(movies$Title[recom_result$MovieID[(i - 1) * num_movies + j]])
+            div(style = "text-align:center", img(src = movies$image_url[recom_result$MovieID[(i - 1) * num_movies + j]], height = 150)),
+            div(style="text-align:center; font-size: 100%", strong(movies$Title[recom_result$MovieID[(i - 1) * num_movies + j]])
             )
             
-        )        
+        )       
       }))) # columns
     }) # rows
+    
     
   }) # renderUI function
   

@@ -31,7 +31,7 @@ shinyUI(
                       title = "Step 2: Discover movies you might like",
                       br(),
                       withBusyIndicatorUI(
-                        actionButton("btn", "Click here to get your recommendations", class = "btn-warning")
+                        actionButton("btn", "Click here to get your recommendations below", class = "btn-warning")
                       ),
                       br(),
                       tableOutput("results")

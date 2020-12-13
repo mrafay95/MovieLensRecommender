@@ -1,0 +1,10 @@
+name: Movie_recommendation
+title:
+username:
+account: nitish7892
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3393950
+bundleId: 3981027
+url: https://nitish7892.shinyapps.io/Movie_recommendation/
+when: 1607824016.94422
